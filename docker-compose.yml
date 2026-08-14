@@ -1,0 +1,94 @@
+
+# =====================================================================
+#  LFM2.5-2.6B Universal Edge Agent Server
+#  하드웨어 프로파일은 전부 .env 로 제어한다. 이 파일은 수정하지 않는다.
+#  프로파일: 노트북(Core Ultra 7 258V) / 메인PC(9950X3D) / RPi5 / Oracle A1
+# =====================================================================
+
+services:
+  lfm-server:
+    # 주의: 구 네임스페이스 ghcr.io/ggerganov/... 는 더 이상 존재하지 않는다(manifest unknown).
+    # LFM2.5 GGUF 는 llama.cpp b10262 로 양자화되었으므로 그 이상의 빌드를 고정해서 쓴다.
+    image: ghcr.io/ggml-org/llama.cpp:${IMAGE_TAG:-server-b10423}
+    container_name: lfm-api
+    restart: unless-stopped
+
+    # BIND_ADDR=127.0.0.1 → 로컬 전용(기본)
+    # BIND_ADDR=0.0.0.0   → RPi5 에서 NPM 이 프록시할 수 있도록 개방. 이때 API_KEY 필수.
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${PORT:-8080}:8080"
+
+    volumes:
+      - ./models:/models:ro
+
+    # 물리 코어 격리. RPi5 에서 CPUSET=0-2 로 두어 NPM 용 코어 3 을 비워둔다.
+    # 비워두면 제한 없음.
+    cpuset: "${CPUSET:-}"
+
+    # 스왑 스래싱 방어. 모델 1.67GB + KV 캐시 + 런타임 여유.
+    mem_limit: ${MEM_LIMIT:-3g}
+
+    # LOAD_MODE 에 mlock 을 쓸 때 필요. auto/mmap 이면 아무 영향이 없다.
+    cap_add:
+      - IPC_LOCK
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+    environment:
+      - LLAMA_ARG_MODEL=/models/${MODEL_FILE:-LFM2.5-2.6B-Q4_K_M.gguf}
+      - LLAMA_ARG_HOST=0.0.0.0
+      - LLAMA_ARG_PORT=8080
+
+      # 모델 native 컨텍스트는 128K 이나, 엣지 노드의 KV 캐시 메모리를 위해 의도적으로 절삭한다.
+      - LLAMA_ARG_CTX_SIZE=${CTX_SIZE:-4096}
+      - LLAMA_ARG_THREADS=${THREADS:-4}
+      - LLAMA_ARG_N_PARALLEL=${PARALLEL_REQUESTS:-1}
+
+      # b10423 기준 --mlock/--mmap 은 --load-mode 로 통합되었다(구 플래그는 DEPRECATED).
+      # auto | none | mmap | mlock | mmap+mlock | dio
+      #   none       : 전량 RAM 적재. 상주 1.7GiB, 콜드스타트 페이징 없음 → 기본 권장
+      #   auto(mmap) : 상주 1.28GiB 로 작지만 첫 요청이 페이지폴트로 크게 느려진다
+      #   mmap+mlock : 상주 2.8GiB 로 뛴다. "2.5GB 미만" 목표를 깨므로 주의
+      - LLAMA_ARG_LOAD_MODE=${LOAD_MODE:-none}
+
+      # LFM2.5 는 항상 <think> 를 먼저 생성하는 순수 추론 모델이다.
+      # deepseek 포맷으로 파싱해 message.reasoning_content 로 분리하고
+      # message.content 에는 최종 답변만 남긴다.
+      - LLAMA_ARG_THINK=${REASONING_FORMAT:-deepseek}
+      - LLAMA_ARG_THINK_BUDGET=${THINK_BUDGET:--1}
+
+      # 빈 값이면 인증 없음(로컬 기본). NPM 으로 외부 노출할 때는 반드시 설정한다.
+      - LLAMA_API_KEY=${API_KEY:-}
+
+      # 슬롯 모니터링 엔드포인트(/slots). 외부 노출 시에는 0 권장.
+      - LLAMA_ARG_ENDPOINT_SLOTS=${ENDPOINT_SLOTS:-1}
+
+      # 기본값 '*' 는 기동 시 서버가 직접 경고를 띄운다("CORS ... no API key is set").
+      # 브라우저에서 쓸 도메인만 허용하도록 좁힌다. localhost 전용은 특수값 'localhost'.
+      - LLAMA_ARG_CORS_ORIGINS=${CORS_ORIGINS:-localhost}
+
+    # 모델 카드 권장 샘플링 기본값. 요청에서 값을 주면 그쪽이 우선한다.
+    # --temp / --repeat-penalty 는 대응 환경변수가 없어(--help 확인) CLI 플래그로만 지정 가능하다.
+    # 주의: 변수명에 TEMP 를 쓰면 Windows 시스템 환경변수 %TEMP% 가 .env 를 덮어써서
+    #       --temp 에 경로 문자열이 들어간다. 반드시 SAMPLING_ 접두사를 유지할 것.
+    command: >
+      --temp ${SAMPLING_TEMP:-0.1}
+      --top-k ${SAMPLING_TOP_K:-50}
+      --repeat-penalty ${SAMPLING_REPEAT_PENALTY:-1.1}
+
+    # 이미지에 기본 HEALTHCHECK 가 있으나 start_period 가 없어 모델 로딩 중 unhealthy 로 보인다.
+    # 저사양 노드(RPi5/A1)의 로딩 시간을 감안해 재정의한다.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: ${HEALTH_START_PERIOD:-120s}
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

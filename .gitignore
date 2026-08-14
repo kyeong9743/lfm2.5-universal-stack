@@ -1,0 +1,16 @@
+# 모델 가중치 (수 GB) — 저장소에 절대 커밋하지 않는다
+models/*
+!models/.gitkeep
+
+# 노드별 환경 설정 (API_KEY 포함)
+.env
+
+# 벤치마크 실측 결과
+benchmarks/*.json
+
+# OS / 에디터
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/

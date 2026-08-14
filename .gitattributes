@@ -1,0 +1,19 @@
+# 줄바꿈 정규화
+# 셸 스크립트가 CRLF 로 체크아웃되면 리눅스(RPi5 / Oracle A1)에서
+#   bad interpreter: /bin/bash^M
+# 로 실행이 실패한다. 반드시 LF 로 고정한다.
+*.sh        text eol=lf
+*.py        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+.env.example text eol=lf
+.gitignore  text eol=lf
+
+# PowerShell 은 Windows 전용이므로 CRLF 유지
+*.ps1       text eol=crlf
+
+# 문서
+*.md        text
+
+# 모델 가중치 (커밋되지 않지만 안전장치)
+*.gguf      binary
