@@ -175,7 +175,7 @@ curl http://localhost:8080/v1/chat/completions \
 
 - **prompt** : 입력을 처리하는 속도 / **decode** : 답변을 만들어 내는 속도
 - 같은 PC 에서 GPU 를 쓰면 decode 가 CPU 의 약 7.6배다.
-- 라즈베리파이 5 에서도 초당 7 토큰 정도로 채팅이 가능하다.
+- 라즈베리파이 5 에서도 초당 7 토큰 정도로 대화가 가능하다.
 
 ![CPU 측정 결과](docs/images/bench_cpu.png)
 
