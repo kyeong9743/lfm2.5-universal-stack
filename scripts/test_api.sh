@@ -60,7 +60,7 @@ REQ='{
     {"role": "system", "content": "You are a concise edge AI assistant."},
     {"role": "user",   "content": "Explain edge computing in one sentence."}
   ],
-  "max_tokens": 512
+  "max_tokens": 2048
 }'
 T0=$(date +%s.%N)
 RESP=$(curl -fsS --max-time 600 -X POST "$BASE/v1/chat/completions" \
@@ -88,7 +88,7 @@ else bad "reasoning_content 가 비어있음 - 파서가 LFM2.5 포맷을 인식
 # 추론 모델 특유의 함정: 사고가 max_tokens 를 다 먹으면 content 가 빈 채로 잘린다
 FINISH=$(echo "$RESP" | jq -r '.choices[0].finish_reason // ""')
 if [ "$FINISH" = "length" ]; then
-    bad "finish_reason=length - 사고가 max_tokens 를 소진. THINK_BUDGET=256 또는 max_tokens>=1024"
+    bad "finish_reason=length - 사고가 max_tokens 를 소진. THINK_BUDGET=256 또는 max_tokens>=2048"
 else
     ok "finish_reason=$FINISH"
 fi

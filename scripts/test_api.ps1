@@ -64,7 +64,7 @@ $body = @{
         @{ role = 'system'; content = 'You are a concise edge AI assistant.' },
         @{ role = 'user';   content = 'Explain edge computing in one sentence.' }
     )
-    max_tokens = 512
+    max_tokens = 2048
 } | ConvertTo-Json -Depth 5
 
 $t0 = [Diagnostics.Stopwatch]::StartNew()
@@ -93,7 +93,7 @@ else { Bad "reasoning_content 가 비어있음 - 파서가 LFM2.5 포맷을 인�
 # 추론 모델 특유의 함정: 사고가 max_tokens 를 다 먹으면 content 가 빈 채로 잘린다
 $finish = $resp.choices[0].finish_reason
 if ($finish -eq 'length') {
-    Bad "finish_reason=length - 사고가 max_tokens 를 소진했습니다. THINK_BUDGET=256 또는 max_tokens>=1024"
+    Bad "finish_reason=length - 사고가 max_tokens 를 소진했습니다. THINK_BUDGET=256 또는 max_tokens>=2048"
 } else {
     Ok "finish_reason=$finish"
 }

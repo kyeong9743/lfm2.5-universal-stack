@@ -1,0 +1,24 @@
+# =====================================================================
+#  NVIDIA GPU 옵션 (선택)
+#  기본 docker-compose.yml 위에 덮어써서 CUDA 이미지로 바꾸고 GPU 를 추가한다.
+#
+#    docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --force-recreate
+#
+#  CPU 로 되돌릴 때는 -f 없이 다시 올린다.
+#    docker compose up -d --force-recreate
+#
+#  필요 조건: NVIDIA 드라이버 + NVIDIA Container Toolkit
+#            (Windows 는 Docker Desktop WSL2 백엔드면 드라이버만 있으면 된다)
+# =====================================================================
+
+services:
+  lfm-server:
+    # server-cuda 는 CUDA 12 빌드, server-cuda13 은 CUDA 13 빌드다.
+    image: ghcr.io/ggml-org/llama.cpp:${GPU_IMAGE_TAG:-server-cuda-b10423}
+
+    gpus: all
+
+    environment:
+      # 모델 레이어를 GPU 에 올릴 개수. 999 는 전부 올린다는 뜻이다.
+      # VRAM 이 부족한 GPU 는 값을 줄여서 일부만 올린다.
+      - LLAMA_ARG_N_GPU_LAYERS=${GPU_LAYERS:-999}

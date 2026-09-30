@@ -21,9 +21,9 @@ $Url    = "https://huggingface.co/$HfRepo/resolve/main/$RemoteFile"
 $ApiUrl = "https://huggingface.co/api/models/$HfRepo/tree/main"
 $Target = Join-Path $ModelDir $ModelFile
 
-# API 조회 실패 시 폴백 (2026-08-14 확인값)
-$ExpectedSize   = 1674454848
-$ExpectedSha256 = '79fdf00351b46cf26f020aead28d01889886be87c55fa0eb907e6f9b00bfee14'
+# API 조회 실패 시 폴백 (2026-09-30 확인값, HF 파일 2026-09-22 갱신본)
+$ExpectedSize   = 1674455040
+$ExpectedSha256 = '02a8b7e17487d326e46d68ce0ba24211e1b80a14c4cd0597fa73c1cd697f52ed'
 
 if (-not (Test-Path $ModelDir)) { New-Item -ItemType Directory -Path $ModelDir | Out-Null }
 

@@ -47,7 +47,7 @@ def main():
     ap.add_argument("--stream", action="store_true", help="SSE 스트리밍으로 받는다")
     ap.add_argument("--prompt", default="엣지 컴퓨팅을 한 문장으로 설명해줘.")
     # ★ 사고 토큰까지 max_tokens 에 포함되므로 작게 주면 content 가 빈다
-    ap.add_argument("--max-tokens", type=int, default=1024)
+    ap.add_argument("--max-tokens", type=int, default=2048)
     args = ap.parse_args()
 
     conf = load_env()
