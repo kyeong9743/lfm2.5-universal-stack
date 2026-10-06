@@ -84,6 +84,9 @@ LFM2.5-2.6B 를 llama.cpp 서버로 실행하는 Docker Compose 스택이다. �
 |---|---|
 | 검증한 장비 | 노트북 (Core Ultra 7 258V), 데스크톱 (Ryzen 9 9950X3D + RTX 5070), 라즈베리파이 5 |
 
+* **[GitBook (프로젝트 문서)](https://kyeong9743.gitbook.io/kyeong9743/home/lfm2.5-2.6b)** : 기획 배경, 시스템 구조도, 상세 문서
+* **[Velog (개발 일지)](https://velog.io/@kyeong9743/LFM2.5-1)** : 작업 과정, 구현 이슈 및 트러블슈팅 기록
+
 ---
 
 ## 2. 주요 기능
